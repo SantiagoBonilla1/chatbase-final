@@ -1,9 +1,5 @@
 const { SYSTEM_PROMPT, buildProfileContext } = require("./prompt");
 
-if (!process.env.GEMINI_API_KEY) {
-  throw new Error("Falta configurar GEMINI_API_KEY en .env");
-}
-
 const MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash";
 
 const USE_SEARCH = process.env.GEMINI_SEARCH !== "false";
@@ -16,6 +12,10 @@ let ai;
 // @google/genai es un módulo ESM, por eso se importa de forma dinámica
 async function getClient() {
   if (!ai) {
+    if (!process.env.GEMINI_API_KEY) {
+      throw new Error("Falta configurar GEMINI_API_KEY (archivo .env o variables de Vercel)");
+    }
+
     const { GoogleGenAI } = await import("@google/genai");
     ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   }

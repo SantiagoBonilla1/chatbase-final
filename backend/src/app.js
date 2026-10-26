@@ -1,4 +1,6 @@
-require("dotenv").config();
+const path = require("path");
+// En local se lee backend/.env; en Vercel las variables vienen del panel del proyecto
+require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
 //importamos Express
 const express = require("express");
 const cors = require("cors");
@@ -37,7 +39,11 @@ app.use((err, req, res, next) => {
     });
 });
 
-// Iniciar servidor
-app.listen(PORT, () => {
-    console.log(`Servidor ejecutándose en http://localhost:${PORT}`);
-});
+// Iniciar servidor solo al ejecutar el archivo directamente (en Vercel lo importa api/index.js)
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`Servidor ejecutándose en http://localhost:${PORT}`);
+    });
+}
+
+module.exports = app;

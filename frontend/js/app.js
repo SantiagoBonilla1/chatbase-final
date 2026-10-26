@@ -1,4 +1,10 @@
-const API_URL = "http://localhost:3000/api/chat";
+// En Vercel el backend está en el mismo dominio (/api/chat).
+// En local (Live Server o abriendo el archivo) se usa el servidor Express del puerto 3000.
+const IS_LOCAL = ["", "localhost", "127.0.0.1"].includes(location.hostname);
+const API_URL =
+    IS_LOCAL && location.port !== "3000"
+        ? "http://localhost:3000/api/chat"
+        : "/api/chat";
 const STORAGE_KEY = "wt-trainer-state";
 
 const SUGGESTIONS = [
