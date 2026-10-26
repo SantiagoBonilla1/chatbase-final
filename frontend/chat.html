@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entrenador War Thunder</title>
+
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body class="chat-page">
+
+    <header class="topbar">
+        <a href="index.html" class="brand">✦ Entrenador WT</a>
+        <nav>
+            <a href="index.html">Inicio</a>
+            <a href="index.html#guias">Guías</a>
+            <a href="index.html#consejos">Consejos</a>
+            <a href="chat.html" class="btn btn-small">Preguntale a la IA</a>
+        </nav>
+    </header>
+
+    <div class="app">
+
+        <aside class="sidebar" id="sidebar">
+            <button id="new-chat" class="new-chat">
+                + Nuevo chat
+            </button>
+
+            <section class="profile" aria-label="Perfil del jugador">
+                <p class="sidebar-label">Tu perfil</p>
+
+                <label for="profile-level">Nivel</label>
+                <select id="profile-level">
+                    <option value="">Sin especificar</option>
+                    <option value="novato">Novato</option>
+                    <option value="intermedio">Intermedio</option>
+                    <option value="avanzado">Avanzado</option>
+                </select>
+
+                <label for="profile-nation">Nación</label>
+                <select id="profile-nation">
+                    <option value="">Sin especificar</option>
+                    <option value="eeuu">Estados Unidos</option>
+                    <option value="alemania">Alemania</option>
+                    <option value="urss">URSS</option>
+                    <option value="gb">Gran Bretaña</option>
+                    <option value="japon">Japón</option>
+                    <option value="china">China</option>
+                    <option value="italia">Italia</option>
+                    <option value="francia">Francia</option>
+                    <option value="suecia">Suecia</option>
+                    <option value="israel">Israel</option>
+                </select>
+
+                <label for="profile-mode">Modalidad</label>
+                <select id="profile-mode">
+                    <option value="">Sin especificar</option>
+                    <option value="arcade">Arcade</option>
+                    <option value="realista">Batallas realistas</option>
+                    <option value="simulador">Simulador</option>
+                </select>
+            </section>
+
+            <p class="sidebar-label">Tus conversaciones</p>
+
+            <div id="chat-history" class="chat-history"></div>
+
+            <div class="sidebar-footer">
+                Proyecto de aprendizaje
+            </div>
+        </aside>
+
+        <main class="chat">
+
+            <header class="chat-header">
+                <button
+                    id="menu-button"
+                    class="menu-button"
+                    type="button"
+                    aria-label="Abrir menú"
+                >☰</button>
+
+                <div class="avatar">✦</div>
+
+                <div>
+                    <h1>Entrenador de War Thunder</h1>
+                    <span class="status">Tanques, aviones, barcos y economía</span>
+                </div>            </header>
+
+            <section
+                id="messages"
+                class="messages"
+                aria-live="polite"
+                aria-label="Conversación"
+            ></section>
+
+            <form id="chat-form" class="chat-form">
+                <label class="sr-only" for="message-input">
+                    Escribí tu mensaje
+                </label>
+
+                <textarea
+                    id="message-input"
+                    rows="1"
+                    maxlength="2000"
+                    placeholder="Preguntá sobre vehículos, tácticas o economía..."
+                    autocomplete="off"
+                    required
+                ></textarea>
+
+                <button type="submit" id="send-button">
+                    Enviar
+                </button>
+            </form>
+
+            <p class="disclaimer">
+                La IA puede cometer errores. Verificá la información importante.
+            </p>
+
+        </main>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

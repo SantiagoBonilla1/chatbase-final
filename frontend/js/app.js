@@ -1,0 +1,426 @@
+const API_URL = "http://localhost:3000/api/chat";
+const STORAGE_KEY = "wt-trainer-state";
+
+const SUGGESTIONS = [
+    "Soy nuevo, ¿por dónde empiezo?",
+    "¿Cómo gano Silver Lions más rápido?",
+    "¿Qué es la penetración de blindaje?",
+    "Armame una ruta de novato a avanzado"
+];
+
+const chatForm = document.getElementById("chat-form");
+const messageInput = document.getElementById("message-input");
+const sendButton = document.getElementById("send-button");
+const messagesContainer = document.getElementById("messages");
+const newChatButton = document.getElementById("new-chat");
+const historyList = document.getElementById("chat-history");
+const sidebar = document.getElementById("sidebar");
+const menuButton = document.getElementById("menu-button");
+
+const profileFields = {
+    level: document.getElementById("profile-level"),
+    nation: document.getElementById("profile-nation"),
+    mode: document.getElementById("profile-mode")
+};
+
+// Estado: conversaciones [{ id, title, messages: [{ role, text, sources }] }]
+let state = loadState();
+let sending = false;
+
+/* ---------- Persistencia ---------- */
+
+function loadState() {
+    try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        if (saved && Array.isArray(saved.chats)) return saved;
+    } catch (error) {
+        // Si el almacenamiento falla, se arranca con un estado vacío
+    }
+    return { chats: [], currentId: null, profile: {} };
+}
+
+function saveState() {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (error) {
+        console.warn("No se pudo guardar el historial:", error);
+    }
+}
+
+function currentChat() {
+    return state.chats.find((chat) => chat.id === state.currentId);
+}
+
+/* ---------- Formato de texto (Markdown básico y seguro) ---------- */
+
+function escapeHtml(text) {
+    return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+}
+
+function inlineFormat(text) {
+    return escapeHtml(text)
+        .replace(/`([^`]+)`/g, "<code>$1</code>")
+        .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+        .replace(/(^|[^*])\*([^*\s][^*]*)\*/g, "$1<em>$2</em>")
+        .replace(
+            /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
+            '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'
+        );
+}
+
+// Convierte títulos, listas y párrafos; todo el texto se escapa antes
+function renderMarkdown(text) {
+    const lines = text.split("\n");
+    let html = "";
+    let list = null; // "ul" | "ol"
+
+    const closeList = () => {
+        if (list) {
+            html += `</${list}>`;
+            list = null;
+        }
+    };
+
+    for (const raw of lines) {
+        const line = raw.trim();
+        const heading = line.match(/^#{1,4}\s+(.*)$/);
+        const bullet = line.match(/^[-*•]\s+(.*)$/);
+        const numbered = line.match(/^\d+[.)]\s+(.*)$/);
+
+        if (heading) {
+            closeList();
+            html += `<h4>${inlineFormat(heading[1])}</h4>`;
+        } else if (bullet || numbered) {
+            const type = bullet ? "ul" : "ol";
+            if (list !== type) {
+                closeList();
+                html += `<${type}>`;
+                list = type;
+            }
+            html += `<li>${inlineFormat((bullet || numbered)[1])}</li>`;
+        } else if (line === "") {
+            closeList();
+        } else {
+            closeList();
+            html += `<p>${inlineFormat(line)}</p>`;
+        }
+    }
+
+    closeList();
+    return html;
+}
+
+/* ---------- Pantalla ---------- */
+
+function scrollToBottom() {
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+function renderWelcome() {
+    messagesContainer.innerHTML = `
+        <div class="welcome">
+            <div class="welcome-icon">✦</div>
+            <h2>¿Listo para mejorar en War Thunder?</h2>
+            <p>
+                Preguntame sobre vehículos, tácticas, economía
+                o pedime una ruta de aprendizaje.
+            </p>
+            <div class="suggestions" id="suggestions"></div>
+        </div>
+    `;
+
+    const container = document.getElementById("suggestions");
+
+    SUGGESTIONS.forEach((text) => {
+        const chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = "chip";
+        chip.textContent = text;
+        chip.addEventListener("click", () => handleSend(text));
+        container.appendChild(chip);
+    });
+}
+
+function createMessageElement({ role, text, sources, error }) {
+    const element = document.createElement("div");
+    element.classList.add("message", role === "user" ? "user" : "assistant");
+
+    if (error) element.classList.add("error");
+
+    if (role === "user" || error) {
+        element.textContent = text;
+    } else {
+        element.innerHTML = renderMarkdown(text);
+
+        if (sources && sources.length) {
+            const box = document.createElement("div");
+            box.className = "sources";
+            box.innerHTML = "<span>Fuentes:</span>";
+
+            sources.forEach((source) => {
+                const link = document.createElement("a");
+                link.href = source.url;
+                link.target = "_blank";
+                link.rel = "noopener noreferrer";
+                link.textContent = source.title;
+                box.appendChild(link);
+            });
+
+            element.appendChild(box);
+        }
+    }
+
+    return element;
+}
+
+function renderMessages() {
+    const chat = currentChat();
+
+    if (!chat || chat.messages.length === 0) {
+        renderWelcome();
+        return;
+    }
+
+    messagesContainer.innerHTML = "";
+    chat.messages.forEach((message) => {
+        messagesContainer.appendChild(createMessageElement(message));
+    });
+    scrollToBottom();
+}
+
+function renderHistory() {
+    historyList.innerHTML = "";
+
+    state.chats.forEach((chat) => {
+        const item = document.createElement("div");
+        item.className = "history-item";
+        if (chat.id === state.currentId) item.classList.add("active");
+
+        const open = document.createElement("button");
+        open.type = "button";
+        open.className = "history-open";
+        open.textContent = chat.title;
+        open.addEventListener("click", () => selectChat(chat.id));
+
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "history-delete";
+        remove.textContent = "×";
+        remove.setAttribute("aria-label", `Eliminar "${chat.title}"`);
+        remove.addEventListener("click", () => deleteChat(chat.id));
+
+        item.append(open, remove);
+        historyList.appendChild(item);
+    });
+}
+
+function showTyping() {
+    const typing = document.createElement("div");
+    typing.className = "message assistant typing";
+    typing.id = "typing";
+    typing.innerHTML = "<span></span><span></span><span></span>";
+    messagesContainer.appendChild(typing);
+    scrollToBottom();
+}
+
+function hideTyping() {
+    const typing = document.getElementById("typing");
+    if (typing) typing.remove();
+}
+
+function setSending(value) {
+    sending = value;
+    sendButton.disabled = value;
+    messageInput.disabled = value;
+    if (!value) messageInput.focus();
+}
+
+/* ---------- Conversaciones ---------- */
+
+function newChat() {
+    // Si el chat actual está vacío se reutiliza
+    const existing = currentChat();
+    if (existing && existing.messages.length === 0) return;
+
+    const chat = { id: Date.now().toString(), title: "Nuevo chat", messages: [] };
+    state.chats.unshift(chat);
+    state.currentId = chat.id;
+    saveState();
+    renderHistory();
+    renderMessages();
+}
+
+function selectChat(id) {
+    if (sending) return;
+    state.currentId = id;
+    saveState();
+    renderHistory();
+    renderMessages();
+    sidebar.classList.remove("open");
+}
+
+function deleteChat(id) {
+    if (sending) return;
+    state.chats = state.chats.filter((chat) => chat.id !== id);
+
+    if (state.currentId === id) {
+        state.currentId = state.chats[0]?.id || null;
+    }
+
+    if (!state.currentId) {
+        newChat();
+        return;
+    }
+
+    saveState();
+    renderHistory();
+    renderMessages();
+}
+
+/* ---------- Comunicación con el backend ---------- */
+
+function getProfile() {
+    return {
+        level: profileFields.level.value,
+        nation: profileFields.nation.value,
+        mode: profileFields.mode.value
+    };
+}
+
+async function requestReply(message, history) {
+    const response = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message, history, profile: getProfile() })
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok || !data.success) {
+        throw new Error(data.message || "Error del servidor");
+    }
+
+    return data;
+}
+
+async function handleSend(text) {
+    text = text.trim();
+    if (!text || sending) return;
+
+    if (!currentChat()) newChat();
+    const chat = currentChat();
+
+    // El historial se toma antes de agregar el mensaje nuevo
+    const history = chat.messages
+        .filter((message) => !message.error)
+        .map((message) => ({ role: message.role, text: message.text }));
+
+    const userMessage = { role: "user", text };
+    chat.messages.push(userMessage);
+
+    if (chat.messages.length === 1) {
+        chat.title = text.length > 32 ? text.slice(0, 32) + "…" : text;
+    }
+
+    saveState();
+    renderHistory();
+    renderMessages();
+
+    messageInput.value = "";
+    autoResize();
+    setSending(true);
+    showTyping();
+
+    try {
+        const data = await requestReply(text, history);
+        chat.messages.push({
+            role: "model",
+            text: data.response,
+            sources: data.sources
+        });
+    } catch (error) {
+        console.error("Error al comunicarse con el backend:", error);
+
+        const offline = error instanceof TypeError;
+        chat.messages.push({
+            role: "model",
+            error: true,
+            text: offline
+                ? "No se pudo conectar con el servidor. ¿Está encendido el backend?"
+                : error.message
+        });
+    }
+
+    hideTyping();
+    saveState();
+
+    if (state.currentId === chat.id) renderMessages();
+    setSending(false);
+}
+
+/* ---------- Eventos ---------- */
+
+function autoResize() {
+    messageInput.style.height = "auto";
+    messageInput.style.height = Math.min(messageInput.scrollHeight, 160) + "px";
+}
+
+chatForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    handleSend(messageInput.value);
+});
+
+// Enter envía; Shift+Enter agrega una línea
+messageInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        chatForm.requestSubmit();
+    }
+});
+
+messageInput.addEventListener("input", autoResize);
+
+newChatButton.addEventListener("click", () => {
+    newChat();
+    sidebar.classList.remove("open");
+    messageInput.focus();
+});
+
+menuButton.addEventListener("click", () => {
+    sidebar.classList.toggle("open");
+});
+
+Object.entries(profileFields).forEach(([key, field]) => {
+    field.value = state.profile?.[key] || "";
+    field.addEventListener("change", () => {
+        state.profile = getProfile();
+        saveState();
+    });
+});
+
+/* ---------- Inicio ---------- */
+
+// Desde la página de inicio se puede llegar con una pregunta sugerida (?q=...)
+const suggestedQuestion = new URLSearchParams(location.search).get("q");
+
+if (!currentChat()) {
+    state.currentId = state.chats[0]?.id || null;
+}
+
+if (!state.currentId) {
+    newChat();
+} else {
+    renderHistory();
+    renderMessages();
+}
+
+if (suggestedQuestion) {
+    // Solo se completa el cuadro de texto: el usuario decide si la envía
+    messageInput.value = suggestedQuestion.slice(0, 2000);
+    autoResize();
+    messageInput.focus();
+}

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guías de War Thunder</title>
+
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/inicio.css">
+</head>
+
+<body>
+
+    <header class="topbar">
+        <a href="index.html" class="brand">✦ Entrenador WT</a>
+        <nav>
+            <a href="#nivel">Tu nivel</a>
+            <a href="#guias">Guías</a>
+            <a href="#consejos">Consejos</a>
+            <a href="#galeria">Galería</a>
+            <a href="chat.html" class="btn btn-small">Preguntale a la IA</a>
+        </nav>
+    </header>
+
+    <main>
+
+        <!-- Presentación -->
+        <section class="hero">
+            <div class="hero-content">
+                <h1>Aprendé War Thunder paso a paso</h1>
+                <p>
+                    Guías para tanques, aviones y barcos, según tu nivel.
+                    Si recién empezás, no vas a ver temas que todavía no necesitás.
+                </p>
+
+                <div class="hero-actions">
+                    <a href="#nivel" class="btn">Empezar</a>
+                    <a href="chat.html" class="btn btn-outline">Preguntale a la IA</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Filtro por nivel -->
+        <section id="nivel" class="section">
+            <h2>1. Elegí tu nivel</h2>
+            <p class="section-text">
+                El nivel se basa en el <strong>BR (Battle Rating)</strong>: un número que mide la fuerza de cada
+                vehículo y decide contra quién jugás. Mientras más alto el BR, más compleja la tecnología.
+            </p>
+
+            <div class="levels" id="level-buttons" role="group" aria-label="Nivel"></div>
+
+            <div class="level-info" id="level-info" aria-live="polite"></div>
+        </section>
+
+        <!-- Guías -->
+        <section id="guias" class="section">
+            <h2>2. Guías para tu nivel</h2>
+
+            <div class="tabs" id="type-buttons" role="group" aria-label="Tipo de vehículo"></div>
+
+            <div class="cards" id="guides"></div>
+        </section>
+
+        <!-- Consejos -->
+        <section id="consejos" class="section">
+            <h2>3. Consejos para tu nivel</h2>
+            <p class="section-text" id="tips-text"></p>
+            <div class="tip-grid" id="tips"></div>
+        </section>
+
+        <!-- Galería -->
+        <section id="galeria" class="section">
+            <h2>Así se ve el juego</h2>
+            <p class="section-text">Capturas oficiales de War Thunder.</p>
+
+            <div class="gallery">
+                <figure><img src="https://staticfiles.warthunder.com/upload/image/%21%20Screenshots%2F0ZCkIEk5lx8_54c8aeb9c143ef61eafc3caf9e4fa620.jpg" alt="Caza a reacción en War Thunder" loading="lazy"></figure>
+                <figure><img src="https://staticfiles.warthunder.com/upload/image/%21%20Screenshots%2Fd1UKaHcDCh4_9ba5b4e81fc57a6e0849589a38fb84dc.jpg" alt="Tanque moderno disparando" loading="lazy"></figure>
+                <figure><img src="https://staticfiles.warthunder.com/upload/image/%21%20Screenshots%2F709jGGAP95Y_a99e912eff0556ffc6242fa4335ddb33.jpg" alt="Bombardero de la Segunda Guerra Mundial" loading="lazy"></figure>
+                <figure><img src="https://staticfiles.warthunder.com/upload/image/%21%20Screenshots%2F3fXCLrnhO2w_6188cc6bde8f13ec603f899f64edb59a.jpg" alt="Caza moderno en una pista" loading="lazy"></figure>
+                <figure><img src="https://staticfiles.warthunder.com/upload/image/%21%20Screenshots%2FEOtmnkhDpsE_03d00a5c122c97766f995c2b69fe3836.jpg" alt="Tanque de posguerra" loading="lazy"></figure>
+                <figure><img src="https://staticfiles.warthunder.com/upload/image/%21%20Screenshots%2FAgNGS7TEFJo_bf6c4cf673bf561303dcc641805381b4.jpg" alt="Caza a reacción en vuelo" loading="lazy"></figure>
+                <figure><img src="https://staticfiles.warthunder.com/upload/image/%21%20Screenshots%2F3qeqQGsjuQg_ed9b7503c107da67744bee7e25ad31dc.jpg" alt="Caza lanzando misiles" loading="lazy"></figure>
+                <figure><img src="https://staticfiles.warthunder.com/upload/image/%21%20Screenshots%2F4soORT2MUxA_9417a985f3828e2183a01348159c6436.jpg" alt="Avión de ataque en vuelo" loading="lazy"></figure>
+            </div>
+        </section>
+
+        <!-- Llamado a la acción -->
+        <section class="cta">
+            <h2>¿Te quedó alguna duda?</h2>
+            <p>
+                Preguntale al entrenador con IA. Contale tu nivel, tu nación y tu modalidad
+                para que te responda a tu medida.
+            </p>
+            <a href="chat.html" class="btn">Preguntale a la IA</a>
+        </section>
+
+    </main>
+
+    <footer class="footer">
+        <p>
+            Proyecto educativo sin fines de lucro. No está afiliado a Gaijin Entertainment.
+            War Thunder es marca de sus propietarios.
+        </p>
+
+        <details>
+            <summary>Créditos de imágenes</summary>
+            <p>
+                Capturas del juego: © Gaijin Games Kft., tomadas de la sección de medios oficial de War Thunder
+                (press kit), sin modificar, cargadas directamente desde los servidores de Gaijin y usadas con fines educativos no comerciales.
+            </p>
+            <p>
+                Fotos de vehículos reales (Wikimedia Commons): M4 Sherman en Utah Beach (CC0);
+                Bf 109 G-6R3 (CC0); lancha PT, USS Fletcher y Bismarck (dominio público).
+                Consultá la página de cada archivo en Commons para el autor.
+            </p>
+        </details>
+    </footer>
+
+    <script src="js/guias.js"></script>
+    <script src="js/inicio.js"></script>
+</body>
+</html>
