@@ -126,32 +126,72 @@ function scrollToBottom() {
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
+// Logo oficial de War Thunder: se carga desde el sitio de Gaijin y se muestra sin modificar
+const WT_LOGO = "https://warthunder.com/assets/img/svg/colored/logo-warthunder-new.svg";
+const SUGGESTION_ICONS = ["🎯", "💰", "🛡️", "🗺️"];
+
 function renderWelcome() {
     messagesContainer.innerHTML = `
         <div class="welcome">
-            <div class="welcome-icon">✦</div>
-            <h2>¿Listo para mejorar en War Thunder?</h2>
-            <p>
-                Preguntame sobre vehículos, tácticas, economía
-                o pedime una ruta de aprendizaje.
-            </p>
+            <div class="welcome-hero">
+                <img class="welcome-logo" src="${WT_LOGO}" alt="War Thunder">
+                <h2>¿Listo para mejorar?</h2>
+                <p>
+                    Tu entrenador virtual para tanques, aviones y barcos.
+                    Preguntame lo que quieras o elegí una de estas ideas.
+                </p>
+            </div>
             <div class="suggestions" id="suggestions"></div>
+            <p class="welcome-note">Proyecto educativo. No está afiliado a Gaijin Entertainment.</p>
         </div>
     `;
 
     const container = document.getElementById("suggestions");
 
-    SUGGESTIONS.forEach((text) => {
+    SUGGESTIONS.forEach((text, index) => {
         const chip = document.createElement("button");
         chip.type = "button";
         chip.className = "chip";
-        chip.textContent = text;
+        chip.innerHTML = `<span class="chip-icon">${SUGGESTION_ICONS[index % SUGGESTION_ICONS.length]}</span>`;
+        chip.append(text);
         chip.addEventListener("click", () => handleSend(text));
         container.appendChild(chip);
     });
 }
 
+// Copia el texto de una respuesta al portapapeles
+function copyButton(text) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "copy-btn";
+    button.textContent = "Copiar";
+    button.setAttribute("aria-label", "Copiar respuesta");
+
+    button.addEventListener("click", async () => {
+        try {
+            await navigator.clipboard.writeText(text);
+            button.textContent = "¡Copiado!";
+        } catch (error) {
+            button.textContent = "No se pudo";
+        }
+        setTimeout(() => (button.textContent = "Copiar"), 1500);
+    });
+
+    return button;
+}
+
+function avatarElement(role) {
+    const avatar = document.createElement("div");
+    avatar.className = "msg-avatar " + (role === "user" ? "user" : "assistant");
+    avatar.setAttribute("aria-hidden", "true");
+    avatar.textContent = role === "user" ? "Tú" : "✦";
+    return avatar;
+}
+
 function createMessageElement({ role, text, sources, error }) {
+    const row = document.createElement("div");
+    row.className = "msg-row " + (role === "user" ? "user" : "assistant");
+
     const element = document.createElement("div");
     element.classList.add("message", role === "user" ? "user" : "assistant");
 
@@ -178,9 +218,12 @@ function createMessageElement({ role, text, sources, error }) {
 
             element.appendChild(box);
         }
+
+        element.appendChild(copyButton(text));
     }
 
-    return element;
+    row.append(avatarElement(role), element);
+    return row;
 }
 
 function renderMessages() {
@@ -226,9 +269,14 @@ function renderHistory() {
 
 function showTyping() {
     const typing = document.createElement("div");
-    typing.className = "message assistant typing";
+    typing.className = "msg-row assistant";
     typing.id = "typing";
-    typing.innerHTML = "<span></span><span></span><span></span>";
+
+    const bubble = document.createElement("div");
+    bubble.className = "message assistant typing";
+    bubble.innerHTML = "<span></span><span></span><span></span>";
+
+    typing.append(avatarElement("assistant"), bubble);
     messagesContainer.appendChild(typing);
     scrollToBottom();
 }
